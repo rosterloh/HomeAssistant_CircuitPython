@@ -1,45 +1,44 @@
-Introduction
-============
+# Introduction
 
-.. image:: https://github.com/rosterloh/HomeAssistant_CircuitPython/workflows/Build%20CI/badge.svg
-    :target: https://github.com/rosterloh/HomeAssistant_CircuitPython/actions
-    :alt: Build Status
+![Build Status](https://github.com/rosterloh/HomeAssistant_CircuitPython/workflows/Build%20CI/badge.svg)
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-    :alt: Code Style: Black
+![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 Helper library for the Home Assistant.
 
+## Dependencies
 
-Dependencies
-=============
 This driver depends on:
 
-* `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
-* `Adafruit MiniMQTT <https://github.com/adafruit/Adafruit_CircuitPython_MiniMQTT>`_
+* [Adafruit CircuitPython](https://github.com/adafruit/circuitpython)
+* [Adafruit MiniMQTT](https://github.com/adafruit/Adafruit_CircuitPython_MiniMQTT)
 
-Usage Example
-=============
+## Usage Example
 
-.. code:: python
+```python3
 
-    import time
-    import board
+    import adafruit_minimqtt.adafruit_minimqtt as MQTT
     from homeassistant import HomeAssistant
-
-    ha = HomeAssistant(
-        url=DATA_SOURCE,
-        json_path=DATA_LOCATION,
-        status_neopixel=board.NEOPIXEL,
-        debug=True,
+    
+    try:
+        from secrets import secrets
+    except ImportError:
+        print("Network secrets are kept in secrets.py, please add them there!")
+        raise
+    
+    def message(client, topic, payload):
+        print("Topic {0} received new value: {1}".format(topic, payload))
+    
+    mqtt_client = MQTT.MQTT(
+        broker=secrets["mqtt_broker"],
+        username=secrets["mqtt_username"],
+        password=secrets["mqtt_password"],
     )
-
+    
+    ha = HomeAssistant(mqtt_client)
+    ha.on_message = message
+    ha.connect()
+    
     while True:
-        try:
-            value = matrixportal.fetch()
-            print("Response is", value)
-        except (ValueError, RuntimeError) as e:
-            print("Some error occured, retrying! -", e)
-
-        time.sleep(3 * 60)  # wait 3 minutes
+        ha.loop()
+```
